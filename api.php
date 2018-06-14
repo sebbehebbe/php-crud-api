@@ -184,8 +184,8 @@ class MySQL implements DatabaseInterface {
 		return "$sql LIMIT $limit OFFSET $offset";
 	}
 
-	public function addGroupByToSql($sql, $groupBy) {
-		return "$sql GROUP BY $groupBy";
+	public function addGroupByToSql($sql, $column) {
+		return "$sql GROUP BY $column";
 	}
 
 	public function likeEscape($string) {
@@ -1897,6 +1897,7 @@ class PHP_CRUD_API {
 		$page      = $this->parseGetParameter($get, 'page', '0-9,');
 		$filters   = $this->parseGetParameterArray($get, 'filter', false);
 		$groupBy   = $this->parseGetParameterArray($get, 'groupBy', false);
+		$countSelect   = $this->parseGetParameterArray($get, 'count', false);
 		$satisfy   = $this->parseGetParameter($get, 'satisfy', 'a-zA-Z0-9\-_,.');
 		$columns   = $this->parseGetParameter($get, 'columns', 'a-zA-Z0-9\-_,.*');
 		$exclude   = $this->parseGetParameter($get, 'exclude', 'a-zA-Z0-9\-_,.*');
@@ -1939,7 +1940,7 @@ class PHP_CRUD_API {
 			$this->applyBeforeHandler($action,$database,$tables[0],$key[0],$before,$inputs);
 		}
 
-		return compact('action','database','tables','key','page','filters','fields','orderings','transform','inputs','collect','select','before','after', 'groupBy');
+		return compact('action','database','tables','key','page','filters','fields','orderings','transform','inputs','collect','select','before','after', 'groupBy', 'countSelect');
 	}
 
 	protected function addWhereFromFilters($filters,&$sql,&$params) {
@@ -1997,15 +1998,20 @@ class PHP_CRUD_API {
 			}
 		}
 		$params = array();
-		$sql = 'SELECT ';
-		$this->convertOutputs($sql,$params,$fields[$table]);
+		if ($countSelect[0]) {
+			$sql = 'SELECT count(*)';
+		} else {
+			$sql = 'SELECT ';
+		}
+			$this->convertOutputs($sql,$params,$fields[$table]);
+
 		$sql .= ' FROM !';
 		$params[] = $table;
 		if (isset($filters[$table])) {
 			$this->addWhereFromFilters($filters[$table],$sql,$params);
 		}
 
-		if (isset($groupBy)) {
+		if ($groupBy[0]) {
 			$groupByCol = $groupBy[0];
 			$sql = $this->db->addGroupByToSql($sql, $groupByCol);
 		}
