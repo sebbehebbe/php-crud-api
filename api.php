@@ -1998,12 +1998,13 @@ class PHP_CRUD_API {
 			}
 		}
 		$params = array();
-		if ($countSelect[0]) {
-			$sql = 'SELECT count(*)';
+		if ($countSelect[0]) { 
+			$sql = 'SELECT count(*), ';
 		} else {
 			$sql = 'SELECT ';
 		}
-			$this->convertOutputs($sql,$params,$fields[$table]);
+
+		$this->convertOutputs($sql,$params,$fields[$table]);
 
 		$sql .= ' FROM !';
 		$params[] = $table;
@@ -2026,6 +2027,9 @@ class PHP_CRUD_API {
 		if ($result = $this->db->query($sql,$params)) {
 			echo '"columns":';
 			$keys = array_keys($fields[$table]);
+			if ($countSelect[0]) {
+				array_unshift($keys, "count");
+			}
 			echo json_encode($keys);
 			$keys = array_flip($keys);
 			echo ',"records":[';
